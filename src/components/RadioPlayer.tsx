@@ -18,7 +18,7 @@ const RadioPlayer = () => {
                     {/* Search Input */}
                     <div className="flex flex-row items-center justify-center">
                         <FaSearch className="mr-2"/>
-                        <input type="text" placeholder="Search for Stations" className="border-1 w-36"/>
+                        <input type="text" placeholder="Search for Stations" className="w-36"/>
                     </div>
                 </div>
                 {/* Radios */}
@@ -28,7 +28,7 @@ const RadioPlayer = () => {
                         <CurrentPlaying />
                     </div>
                     {/* Radio List */}
-                    <div className="max-h-[400px] overflow-y-auto pr-2 mt-2">
+                    <div className="max-h-[400px] overflow-y-auto pr-2 mt-2 custom-scrollbar">
                         <RadioSelect />
                         <RadioSelect />
                         <RadioSelect />

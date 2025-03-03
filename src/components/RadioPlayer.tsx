@@ -4,6 +4,7 @@ import { FaSearch, FaMusic, FaHeadphones, FaBars, FaChevronLeft, FaChevronRight 
 import CurrentPlaying from "../components/CurrentPlaying";
 import Sidebar from "../components/Sidebar";
 
+// interfaces just to make sure and avoid errors
 interface Station {
   stationuuid: string;
   name: string;
@@ -36,7 +37,7 @@ const getSavedCurrentStation = () => {
     }
   };
 
-// function to get a random API server
+// function to get a random API server (? maybe not the best way to do this i dont really know)
 async function getApiUrl() {
   try {
     const response = await fetch('https://all.api.radio-browser.info/json/servers');
@@ -61,7 +62,7 @@ const RadioPlayer = () => {
   const [favorites, setFavorites] = useState<Station[]>(getSavedFavorites());
   const [apiBaseUrl, setApiBaseUrl] = useState('https://de1.api.radio-browser.info/json');
   
-  // pagination states
+  // pagination 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalStations, setTotalStations] = useState(0);
   const stationsPerPage = 10;
@@ -155,7 +156,7 @@ const RadioPlayer = () => {
           if (data.length < stationsPerPage) {
             setTotalStations(data.length); 
           } else {
-            setTotalStations(data.length * 100); // Use estimate only for larger datasets
+            setTotalStations(data.length * 100);
           }
         }
         try {
@@ -178,8 +179,6 @@ const RadioPlayer = () => {
         setLoading(false);
       }
     };
-  
-    // add debounce to search
     const timeoutId = setTimeout(() => {
       fetchStations();
     }, 500);
@@ -207,6 +206,7 @@ const RadioPlayer = () => {
       {/* this is to close sidebar when clicking outside */}
       {isSidebarOpen && (
         <div 
+        //sidebar bg opacity wont work? dont really know why but probabbly this is ok for now
           className="fixed inset-0 z-40 transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />

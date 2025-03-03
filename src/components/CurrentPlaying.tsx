@@ -21,7 +21,7 @@ const CurrentPlaying = ({ station }: CurrentPlayingProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   useEffect(() => {
-    // When station changes, start playing automatically
+    // for when station changes, start playing automatically
     if (audioRef.current) {
       audioRef.current.src = station.url;
       audioRef.current.play().catch(error => console.error("Playback error:", error));
@@ -57,13 +57,14 @@ const CurrentPlaying = ({ station }: CurrentPlayingProps) => {
             onClick={togglePlay}
             className="p-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all"
           >
+            {/** Play/Pause button */}
             {isPlaying ? 
               <FaPauseCircle size={28} className="text-white" /> : 
               <FaPlayCircle size={28} className="text-white" />
             }
           </button>
         </div>
-        
+        {/* Station Info */}
         <div className="flex-1">
           <div className="flex items-center justify-between">
             <div>
@@ -74,7 +75,7 @@ const CurrentPlaying = ({ station }: CurrentPlayingProps) => {
                 {station.country || "Unknown Location"} • {station.tags?.split(',')[0] || "Various"}
               </p>
             </div>
-            
+            {/* Mute button */}
             <button 
               onClick={toggleMute}
               className="p-2 rounded-full hover:bg-gray-700/50 transition-colors"
@@ -88,7 +89,7 @@ const CurrentPlaying = ({ station }: CurrentPlayingProps) => {
         </div>
       </div>
       
-      {/* Optional station image/logo */}
+      {/*station image/logo */}
     {station.favicon && (
       <div className="absolute top-0 right-0 h-full w-1/4 opacity-10 pointer-events-none">
         <img 

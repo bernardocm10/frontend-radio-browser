@@ -14,33 +14,56 @@ interface Station {
   language: string;
 }
 
+// Helper function to get initial favorites from localStorage
+const getSavedFavorites = () => {
+  try {
+    const saved = localStorage.getItem('radioFavorites');
+    console.log("Initial localStorage check:", saved);
+    return saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    console.error("Error loading initial favorites:", e);
+    return [];
+  }
+};
+
+// Function to get a random API server
+async function getApiUrl() {
+  try {
+    const response = await fetch('https://all.api.radio-browser.info/json/servers');
+    const servers = await response.json();
+    if (servers.length > 0) {
+      const randomServer = servers[Math.floor(Math.random() * servers.length)];
+      return `https://${randomServer.name}/json`;
+    }
+    return 'https://de1.api.radio-browser.info/json';
+  } catch (error) {
+    console.error('Error fetching API servers:', error);
+    return 'https://de1.api.radio-browser.info/json';
+  }
+}
+
 const RadioPlayer = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [stations, setStations] = useState<Station[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentStation, setCurrentStation] = useState<Station | null>(null);
-  const [favorites, setFavorites] = useState<Station[]>([]);
+  const [favorites, setFavorites] = useState<Station[]>(getSavedFavorites());
+  const [apiBaseUrl, setApiBaseUrl] = useState('https://de1.api.radio-browser.info/json');
 
-  // loading favorites
+  // Get API server on component mount
   useEffect(() => {
-    const savedFavorites = localStorage.getItem('radioFavorites');
-    console.log("Loading favorites from storage:", savedFavorites);
-    if (savedFavorites) {
-      try {
-        const parsed = JSON.parse(savedFavorites);
-        console.log("Parsed favorites:", parsed);
-        setFavorites(parsed);
-      } catch (e) {
-        console.error("Error loading favorites:", e);
-      }
-    }
+    getApiUrl().then(url => {
+      console.log("Using API base URL:", url);
+      setApiBaseUrl(url);
+    });
   }, []);
   
-  // saving favorites
+  // saving favorites when they change
   useEffect(() => {
     console.log("Saving favorites to storage:", favorites);
     localStorage.setItem('radioFavorites', JSON.stringify(favorites));
+    console.log("After saving, localStorage contains:", localStorage.getItem('radioFavorites'));
   }, [favorites]);
 
   const toggleSidebar = () => {
@@ -68,15 +91,38 @@ const RadioPlayer = () => {
     const fetchStations = async () => {
       setLoading(true);
       try {
+        // using the API base URL to avoid CORS issues as recomended by the radio API
         const response = await fetch(
-          `https://de1.api.radio-browser.info/json/stations/search?limit=10${
+          `${apiBaseUrl}/stations/search?limit=10${
             searchQuery ? `&name=${encodeURIComponent(searchQuery)}` : ""
-          }`
+          }`,
+          {
+            headers: {
+              'User-Agent': 'RadioBrowserWebApp/1.0',
+            }
+          }
         );
         const data = await response.json();
         setStations(data);
       } catch (error) {
         console.error("Error fetching stations:", error);
+        
+        // fallback to CORS proxy if direct API fails
+        try {
+          console.log("Trying CORS proxy...");
+          const response = await fetch(
+            `https://api.allorigins.win/get?url=${encodeURIComponent(
+              `https://de1.api.radio-browser.info/json/stations/search?limit=10${
+                searchQuery ? `&name=${encodeURIComponent(searchQuery)}` : ""
+              }`
+            )}`
+          );
+          const data = await response.json();
+          const stations = JSON.parse(data.contents);
+          setStations(stations);
+        } catch (proxyError) {
+          console.error("Proxy attempt also failed:", proxyError);
+        }
       } finally {
         setLoading(false);
       }
@@ -88,9 +134,9 @@ const RadioPlayer = () => {
     }, 500);
   
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, apiBaseUrl]);
 
-  // this is just to set the first station as the current station
+  // set first station as current station 
   useEffect(() => {
     if (stations.length > 0 && !currentStation) {
       setCurrentStation(stations[0]);
@@ -106,10 +152,10 @@ const RadioPlayer = () => {
         onSelectStation={handleStationSelect}
       />
       
-      {/* ts is to close sidebar when clicking outside */}
+      {/* this is close sidebar when clicking outside */}
       {isSidebarOpen && (
         <div 
-        //for some reason, couldnt make the bg-opacity work?? holy jesus this isannoying
+        //for some reason the bg opacity is not working ?
           className="fixed inset-0 z-40 transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -135,7 +181,7 @@ const RadioPlayer = () => {
               </h1>
             </div>
             
-            {/* Empty div (js for alignment) */}
+            {/* Empty div for alignment */}
             <div className="w-8"></div>
           </div>
               

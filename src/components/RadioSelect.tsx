@@ -1,4 +1,4 @@
-import { FaPencilAlt, FaTrashAlt, FaPlayCircle, FaPauseCircle, FaHeart, FaRegHeart } from "react-icons/fa";
+import { FaPlayCircle, FaPauseCircle, FaHeart, FaRegHeart } from "react-icons/fa";
 
 interface Station {
   stationuuid: string;
@@ -68,14 +68,6 @@ const RadioSelect = ({
             ) : (
               <FaRegHeart size={16} className="text-gray-300 hover:text-white" />
             )}
-          </div>
-          {/* Edit Button */}
-          <div className="p-2 hover:bg-gray-600/50 rounded-full transition-colors">
-            <FaPencilAlt size={16} className="text-gray-300 hover:text-white" />
-          </div>
-          {/* Delete Button */}
-          <div className="p-2 hover:bg-gray-600/50 rounded-full transition-colors">
-            <FaTrashAlt size={16} className="text-gray-300 hover:text-white" />
           </div>
         </div>
       </div>

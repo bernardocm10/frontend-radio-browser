@@ -64,7 +64,7 @@ const RadioSelect = ({
             onClick={handleFavoriteClick}
           >
             {isFavorite ? (
-              <FaHeart size={16} className="text-red-500 hover:text-red-400" />
+              <FaHeart size={16} className="text-purple-500 hover:text-purple-400" />
             ) : (
               <FaRegHeart size={16} className="text-gray-300 hover:text-white" />
             )}

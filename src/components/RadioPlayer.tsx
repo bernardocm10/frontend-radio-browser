@@ -150,6 +150,7 @@ const RadioPlayer = () => {
         onClose={() => setIsSidebarOpen(false)} 
         favorites={favorites}
         onSelectStation={handleStationSelect}
+        onRemoveFavorite={handleToggleFavorite}
       />
       
       {/* this is close sidebar when clicking outside */}

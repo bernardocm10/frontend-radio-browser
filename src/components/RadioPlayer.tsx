@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import RadioSelect from "../components/RadioSelect";
-import { FaSearch, FaMusic, FaHeadphones, FaBars } from "react-icons/fa";
+import { FaSearch, FaMusic, FaHeadphones, FaBars, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import CurrentPlaying from "../components/CurrentPlaying";
 import Sidebar from "../components/Sidebar";
 
@@ -14,7 +14,7 @@ interface Station {
   language: string;
 }
 
-// Helper function to get initial favorites from localStorage
+// get initial favorites from localStorage
 const getSavedFavorites = () => {
   try {
     const saved = localStorage.getItem('radioFavorites');
@@ -26,7 +26,7 @@ const getSavedFavorites = () => {
   }
 };
 
-// Function to get a random API server
+// function to get a random API server
 async function getApiUrl() {
   try {
     const response = await fetch('https://all.api.radio-browser.info/json/servers');
@@ -50,8 +50,14 @@ const RadioPlayer = () => {
   const [currentStation, setCurrentStation] = useState<Station | null>(null);
   const [favorites, setFavorites] = useState<Station[]>(getSavedFavorites());
   const [apiBaseUrl, setApiBaseUrl] = useState('https://de1.api.radio-browser.info/json');
+  
+  // pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalStations, setTotalStations] = useState(0);
+  const stationsPerPage = 10;
+  const totalPages = Math.ceil(totalStations / stationsPerPage);
 
-  // Get API server on component mount
+  // get API server on component mount
   useEffect(() => {
     getApiUrl().then(url => {
       console.log("Using API base URL:", url);
@@ -77,23 +83,41 @@ const RadioPlayer = () => {
   const handleToggleFavorite = (station: Station) => {
     const isFavorite = favorites.some(fav => fav.stationuuid === station.stationuuid);
     
+    // remove from favorites if already favorited, otherwise add
     if (isFavorite) {
-      // Remove from favorites
       setFavorites(favorites.filter(fav => fav.stationuuid !== station.stationuuid));
     } else {
-      // Add to favorites
       setFavorites([...favorites, station]);
     }
   };
 
-  // fetch stations when search query changes
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // reset to first page
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // fetch stations when search query or page changes
   useEffect(() => {
     const fetchStations = async () => {
       setLoading(true);
       try {
-        // using the API base URL to avoid CORS issues as recomended by the radio API
+        const offset = (currentPage - 1) * stationsPerPage;
+        
+        // using the API base URL with pagination
         const response = await fetch(
-          `${apiBaseUrl}/stations/search?limit=10${
+          `${apiBaseUrl}/stations/search?limit=${stationsPerPage}&offset=${offset}${
             searchQuery ? `&name=${encodeURIComponent(searchQuery)}` : ""
           }`,
           {
@@ -102,17 +126,27 @@ const RadioPlayer = () => {
             }
           }
         );
-        const data = await response.json();
-        setStations(data);
-      } catch (error) {
-        console.error("Error fetching stations:", error);
+
+        const totalHeader = response.headers.get('X-Total-Count');
+        if (totalHeader) {
+          setTotalStations(parseInt(totalHeader, 10));
+        }
         
-        // fallback to CORS proxy if direct API fails
+        const data = await response.json();
+
+        if (data.length > 0 && !totalHeader) {
+          if (data.length < stationsPerPage) {
+            setTotalStations(data.length); 
+          } else {
+            setTotalStations(data.length * 100); // Use estimate only for larger datasets
+          }
+        }
         try {
           console.log("Trying CORS proxy...");
+          const offset = (currentPage - 1) * stationsPerPage;
           const response = await fetch(
             `https://api.allorigins.win/get?url=${encodeURIComponent(
-              `https://de1.api.radio-browser.info/json/stations/search?limit=10${
+              `https://de1.api.radio-browser.info/json/stations/search?limit=${stationsPerPage}&offset=${offset}${
                 searchQuery ? `&name=${encodeURIComponent(searchQuery)}` : ""
               }`
             )}`
@@ -134,7 +168,7 @@ const RadioPlayer = () => {
     }, 500);
   
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, apiBaseUrl]);
+  }, [searchQuery, apiBaseUrl, currentPage]);
 
   // set first station as current station 
   useEffect(() => {
@@ -153,10 +187,9 @@ const RadioPlayer = () => {
         onRemoveFavorite={handleToggleFavorite}
       />
       
-      {/* this is close sidebar when clicking outside */}
+      {/* this is to close sidebar when clicking outside */}
       {isSidebarOpen && (
         <div 
-        //for some reason the bg opacity is not working ?
           className="fixed inset-0 z-40 transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -182,7 +215,7 @@ const RadioPlayer = () => {
               </h1>
             </div>
             
-            {/* Empty div for alignment */}
+            {/* Empty div (alignment only) */}
             <div className="w-8"></div>
           </div>
               
@@ -232,18 +265,54 @@ const RadioPlayer = () => {
                 ) : stations.length === 0 ? (
                   <div className="text-center py-4">No stations found</div>
                 ) : (
-                  stations.map(station => (
-                    <RadioSelect
-                      key={station.stationuuid}
-                      station={station}
-                      isActive={currentStation?.stationuuid === station.stationuuid}
-                      isFavorite={favorites.some(fav => fav.stationuuid === station.stationuuid)}
-                      onSelect={() => handleStationSelect(station)}
-                      onToggleFavorite={handleToggleFavorite}
-                    />
-                  ))
+                  <>
+                    {stations.map(station => (
+                      <RadioSelect
+                        key={station.stationuuid}
+                        station={station}
+                        isActive={currentStation?.stationuuid === station.stationuuid}
+                        isFavorite={favorites.some(fav => fav.stationuuid === station.stationuuid)}
+                        onSelect={() => handleStationSelect(station)}
+                        onToggleFavorite={handleToggleFavorite}
+                      />
+                    ))}
+                  </>
                 )}
               </div>
+                {/* Pagination Controls */}
+                {!loading && stations.length > 0 && totalStations > stationsPerPage && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-600">
+                  <button 
+                    onClick={handlePreviousPage} 
+                    disabled={currentPage === 1}
+                    className={`flex items-center px-3 py-2 rounded-lg ${
+                      currentPage === 1 
+                        ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
+                        : 'bg-gray-800 hover:bg-gray-700 text-white'
+                    }`}
+                  >
+                    <FaChevronLeft className="mr-1" /> 
+                    Previous
+                  </button>
+                  
+                  <div className="text-gray-300">
+                    Page {currentPage} of {totalPages || '?'}
+                  </div>
+                  
+                  <button 
+                    onClick={handleNextPage} 
+                    disabled={currentPage === totalPages}
+                    className={`flex items-center px-3 py-2 rounded-lg ${
+                      totalPages && currentPage === totalPages 
+                        ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
+                        : 'bg-gray-800 hover:bg-gray-700 text-white'
+                    }`}
+                  >
+                    Next
+                    <FaChevronRight className="ml-1" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

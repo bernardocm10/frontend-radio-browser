@@ -16,15 +16,13 @@ interface SidebarProps {
   onClose: () => void;
   favorites: Station[];
   onSelectStation: (station: Station) => void;
-  onRemoveFavorite?: (station: Station) => void; // Add this prop
+  onRemoveFavorite?: (station: Station) => void; 
 }
 
 const Sidebar = ({ isOpen, onClose, favorites, onSelectStation, onRemoveFavorite }: SidebarProps) => {
-  // Add state for search filtering
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredFavorites, setFilteredFavorites] = useState<Station[]>([]);
   
-  // Update filtered favorites whenever search term or favorites change
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredFavorites(favorites);
@@ -42,7 +40,7 @@ const Sidebar = ({ isOpen, onClose, favorites, onSelectStation, onRemoveFavorite
   }, [searchTerm, favorites]);
 
   const handleRemoveFavorite = (e: React.MouseEvent, station: Station) => {
-    e.stopPropagation(); // Prevent triggering the station selection
+    e.stopPropagation();
     if (onRemoveFavorite) {
       onRemoveFavorite(station);
     }

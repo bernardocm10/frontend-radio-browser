@@ -25,6 +25,16 @@ const getSavedFavorites = () => {
     return [];
   }
 };
+const getSavedCurrentStation = () => {
+    try {
+      const saved = localStorage.getItem('radioCurrentStation');
+      console.log("Initial current station check:", saved);
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      console.error("Error loading saved current station:", e);
+      return null;
+    }
+  };
 
 // function to get a random API server
 async function getApiUrl() {
@@ -47,7 +57,7 @@ const RadioPlayer = () => {
   const [stations, setStations] = useState<Station[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentStation, setCurrentStation] = useState<Station | null>(null);
+  const [currentStation, setCurrentStation] = useState<Station | null>(getSavedCurrentStation());
   const [favorites, setFavorites] = useState<Station[]>(getSavedFavorites());
   const [apiBaseUrl, setApiBaseUrl] = useState('https://de1.api.radio-browser.info/json');
   
@@ -71,6 +81,13 @@ const RadioPlayer = () => {
     localStorage.setItem('radioFavorites', JSON.stringify(favorites));
     console.log("After saving, localStorage contains:", localStorage.getItem('radioFavorites'));
   }, [favorites]);
+  
+  useEffect(() => {
+    if (currentStation) {
+      console.log("Saving current station to storage:", currentStation.name);
+      localStorage.setItem('radioCurrentStation', JSON.stringify(currentStation));
+    }
+  }, [currentStation]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -173,9 +190,9 @@ const RadioPlayer = () => {
   // set first station as current station 
   useEffect(() => {
     if (stations.length > 0 && !currentStation) {
-      setCurrentStation(stations[0]);
-    }
-  }, [stations, currentStation]);
+        setCurrentStation(stations[0]);
+      }
+    }, [stations, currentStation]);
 
   return (
     <>

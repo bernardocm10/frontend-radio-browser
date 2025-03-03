@@ -1,19 +1,29 @@
-import { FaTimes, FaCog } from 'react-icons/fa';
+import { FaTimes, FaCog, FaHeart } from 'react-icons/fa';
+
+interface Station {
+  stationuuid: string;
+  name: string;
+  url: string;
+  favicon: string;
+  country: string;
+  tags: string;
+  language: string;
+}
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  favorites: Station[];
+  onSelectStation: (station: Station) => void;
 }
 
-const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+const Sidebar = ({ isOpen, onClose, favorites, onSelectStation }: SidebarProps) => {
   return (
     <div 
       className={`fixed top-0 left-0 h-full w-64 bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out z-50 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}
-    >
+        isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="flex flex-col h-full p-4">
-        <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-700">
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
             Radio Browser
           </h2>
@@ -24,19 +34,57 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             <FaTimes />
           </button>
         </div>
-        <div>
-            <input type="text" className='bg-gray-700 rounded-lg w-full py-2 px-4 text-black' placeholder='Search Here'/>
+        
+        <div className="mb-6">
+          <input 
+            type="text" 
+            className='bg-gray-800 rounded-lg w-full py-2 px-4 text-white border border-gray-700 focus:border-purple-500 focus:outline-none' 
+            placeholder='Search Here'
+          />
         </div>
         
-        <nav className="flex-1">
-          <ul className="space-y-3">
-            <li></li>
-            <li></li>
-            <li></li>
-          </ul>
-        </nav>
+        {/* Favorites Section */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <FaHeart className="text-red-500" />
+            <h3 className="font-bold text-lg text-white">Favorites</h3>
+          </div>
+          
+          {/* Favorites List */}
+          <div className="max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+            {favorites.length === 0 ? (
+              <div className="text-gray-400 text-center py-4">No favorites yet</div>
+            ) : (
+              <ul className="space-y-2">
+                {favorites.map(station => (
+                  <li 
+                    key={station.stationuuid} 
+                    className="p-3 rounded-lg bg-gray-800/70 hover:bg-gray-700 cursor-pointer transition-all"
+                    onClick={() => {
+                      onSelectStation(station);
+                      onClose(); // this is to close the sidebar after selection, this can be VERY annoying (personal preference, lol)
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <img 
+                        src={station.favicon || "https://placehold.co/40x40?text=Radio"} 
+                        alt={station.name} 
+                        className="w-8 h-8 rounded-md mr-3 object-cover"
+                        onError={(e) => { e.currentTarget.src = "https://placehold.co/40x40?text=Radio" }}
+                      />
+                      <div>
+                        <p className="font-medium text-white">{station.name}</p>
+                        <p className="text-xs text-gray-400">{station.country}</p>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
         
-        <div className="pt-4 border-t border-gray-700">
+        <div className="mt-auto pt-4 border-t border-gray-700">
           <a href="#" className="flex items-center p-3 rounded-lg hover:bg-gray-800 text-white hover:text-purple-400 transition-colors">
             <FaCog className="mr-3" />
             Settings
